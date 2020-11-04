@@ -53,18 +53,7 @@ void queueFromArray(Queue** queueArray)
 	
 }
 
-/*
-함수 [ pushQueue ]는
-	새로운 Node를 선언하고 dataArray에 담긴 값을 담아		// 함수 [ structFromData ]를 사용한다.
-	주어진 Queue*의 frontNode에  Node를 추가한다.
-함수의 동작순서는 다음과 같다.
-	1. 함수 [ structFromData ]를 호출하여 Node를 선언하고
-		dataArray에 담긴 값을 Node의 멤버 float* featureArray에 할당한다.
-*/
-void pushQueue(Queue* queue)
-{
-	
-}
+
 /*
 함수 [ sturctFromData ]는
 	featureCount개 데이터를 Node의 data 멤버에 할당한다.
@@ -75,7 +64,7 @@ void pushQueue(Queue* queue)
 	2. Node의 멤버 중 float*로 선언된 featureArray를 동적할당하여 선언한다.
 	3. for문을 featureCount번 실행하여 featureArray[i]에 (float)rand(1000)값을 저장한다.
 */
-Node* structFormData()
+Node* structFromData()
 {
 	Node* tempNode = malloc(sizeof(Node));
 	tempNode->featureArray = malloc(featureCount * sizeof(float));
@@ -86,13 +75,62 @@ Node* structFormData()
 	tempNode->next = NULL;
 	return tempNode;
 }
+/*
+함수 [ pushFirst ]는
+	새로운 Node를 선언하고 dataArray에 담긴 값을 담아		// 함수 [ structFromData ]를 사용한다.
+	주어진 Queue*의 frontNode에  Node를 추가한다.
+함수의 동작순서는 다음과 같다.
+	1. 함수 [ structFromData ]를 호출하여 Node를 선언하고
+		dataArray에 담긴 값을 Node의 멤버 float* featureArray에 할당한다.
+*/
+void pushFirst(Queue* queue)
+{
+	Node* tempNode = structFromData();
+	queue->rearNode = tempNode;
+	queue->frontNode = tempNode;
+}
+/*
+함수 [ makeQueue ] 는
+	
+함수의 동작순서는 다음과 같다.
+	1. 
+*/
+Queue* makeQueue()
+{
+	Queue* tempQueue = malloc(sizeof(Queue));
+	tempQueue->frontNode = NULL;
+	tempQueue->rearNode = NULL;
+	tempQueue->nodeCounts = 0;
+	return tempQueue;
+}
+
+/*
+ * 함수명 : makeQueueArray
+ * 작성자 : 김종현
+ * 입력형식 : void
+ * 출력형식 : Queue**
+ * 함수[ queueArray] 설명
+	
+ * 함수의 동작 순서
+	1.
+*/
+Queue** makeQueueArray()
+{
+	Queue** queueArray = malloc(numberK * sizeof(Queue*));
+	for (int i = 0; i < numberK; i++)
+	{
+		queueArray[i] = makeQueue();
+		pushFirst(queueArray[i]);
+	}
+	return queueArray;
+}
 
 
 void main(void) {
 	FILE* inputFile;
 	float** dataArray;				// inputFile의 값을 저장하고 있는 [ featureCount ] 차원 배열
 	float** sampleArray;			// numberK개 Queue*를 저장하고 있는 1차원 배열, samplePoint를 featureArray로 갖는다.
-	Queue* queueArray;
+	Queue** queueArray;
 
 	dataToArray(&inputFile, &dataArray);
 	//printf("%d %d %d\n", dataCount, featureCount, numberK);
@@ -100,17 +138,45 @@ void main(void) {
 	randomSampleArray(&sampleArray);
 	//printFloat2DArray(sampleArray, numberK, featureCount);
 
-	/*
-	함수 [ structFormData() ] 테스트
-	*/
-	Node* testNode = structFormData();
-		for (int i = 0; i < featureCount; i++)
-	{
-		printf("%f\n", testNode->featureArray[i]);
-	}
+				/*
+				함수 [ structFormData ] 테스트												[ TEST #1 ]
+				*/
+				Node* testNode = structFromData();
+				for (int i = 0; i < featureCount; i++)
+				{
+					printf("TEST #1:\t%f\n", testNode->featureArray[i]);
+				}
+
+				/*
+				함수 [ pushFirst ] 테스트															[ TEST #2 ]
+				*/
+				Queue* firstQueue = makeQueue();
+				pushFirst(firstQueue);
+				for (int i = 0; i < featureCount; i++)
+				{
+					printf("TEST #2:\t%f\n", firstQueue->frontNode->featureArray[i]);
+				}
+				
+				/*
+				함수 [ makeQueueArray ] 테스트											[ TEST #3 ]
+				*/
+				queueArray = makeQueueArray();
+				for (int i = 0; i < numberK; i++)
+				{
+					for (int j = 0; j < featureCount; j++)
+					{
+						printf("TEST #3:\t%f\t", queueArray[i]->frontNode->featureArray[j]);
+					}
+					printf("\n");
+				}
 	return;
 }
-
+/*
+함수[ functionNameRegulation] 는
+	
+함수의 동작순서는 다음과 같다.
+	1.
+*/
 
 /*
 함수 [scanfException]은 scanf함수 또는 fscanf 함수가
