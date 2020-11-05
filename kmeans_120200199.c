@@ -65,7 +65,7 @@ Node* structFromRandom()
 	tempNode->featureArray = malloc(featureCount * sizeof(float));
 	for (int i = 0; i < featureCount; i++)
 	{
-		(tempNode->featureArray)[i] = (float)rand(1000);
+		(tempNode->featureArray)[i] = 1/(float)rand(1000)*10000;
 	}
 	tempNode->next = NULL;
 	return tempNode;
@@ -250,12 +250,59 @@ Node* queuePop(Queue* dataQueue)
 		printf("WARNINGS : QUEUE UNDERFLOW");
 		exit(-1);
 	}
-	Node* tempNode = malloc(sizeof(Node));
-	dataQueue->frontNode = tempNode;
+	Node* tempNode = dataQueue->frontNode;
 	dataQueue->frontNode = tempNode->next;
 	dataQueue->nodeCounts--;
 	return tempNode;
 }
+
+float nodeDistance(Node* firstNode, Node* secondNode)
+{
+	float sum = 0, deviation = 0;
+	for (int i = 0; i < featureCount; i++)
+	{
+		deviation = firstNode->featureArray[i] - secondNode->featureArray[i];
+		//printf("%f\t%f\t\n", firstNode->featureArray[i], secondNode->featureArray[i]);
+		//printf("DEV : %f\n", deviation);
+		deviation = deviation * deviation;
+		//printf("DEV^2 : %f\n", deviation);
+		sum += deviation;
+	}
+	return sum;
+}
+
+
+/*
+ * 함수명 : shortestQueuePush
+ * 입력형식 : 
+ * 출력형식 : void
+ * 함수[ shortestQueuePush ] 설명
+		
+ * 함수의 동작 순서
+		1. 
+	함수 종료.
+*/
+void shortestQueuePush(Queue** queueArray, Node* tempNode)
+{
+	int shortestIndex;
+	float shortestDistance = 3.4028234664e+38;
+	shortestIndex = 0;
+	for (int i = 0; i < numberK; i++)
+	{
+		float tempFloat = nodeDistance(tempNode, queueArray[i]->frontNode);
+		if (shortestDistance > tempFloat)
+		{
+			//printf("%f\t", tempFloat);
+			shortestDistance = tempFloat;
+			shortestIndex = i;
+		}
+	}
+	printf("%d\n", shortestIndex);
+	queueArray[shortestIndex]->rearNode->next = tempNode;
+	queueArray[shortestIndex]->rearNode = tempNode;
+	queueArray[shortestIndex]->nodeCounts++;
+}
+
 
 void main(void) {
 	FILE* inputFile;
@@ -296,9 +343,9 @@ void main(void) {
 				{
 					for (int j = 0; j < featureCount; j++)
 					{
-						//printf("TEST PRINT #3:\t%f\t", queueArray[i]->frontNode->featureArray[j]);
+						printf("TEST PRINT #3:\t%f\t\n", queueArray[i]->frontNode->featureArray[j]);
 					}
-					//printf("\n");
+					printf("\n");
 				}
 
 				/*
@@ -351,14 +398,46 @@ void main(void) {
 					//printf("\n");
 				}
 
-				/*
-				함수 [ queuePop ] 테스트														[ TEST PRINT #8 ]
-				*/
-				Node* thirdTempNode = queuePop(thirdQueue);
-				printf("%f", thirdTempNode->featureArray[0]);
+				///*
+				//함수 [ queuePop ] 테스트															[ TEST PRINT #8 ]
+				//*/
+				//Node* thirdTempNode = queuePop(thirdQueue);
+				////printf("TEST PRINT #8:\t");
+				//for (int i = 0; i < featureCount; i++)
+				//{
+				//	//printf("%f\t", thirdTempNode->featureArray[i]);
+				//}
+				////printf("\n");
+				//
+				///*
+				//함수 [ nodeDistance ] 테스트														[ TEST PRINT #9 ]
+				//*/
+				//float maxDistance = 0;
+				//int maxIndex = 0;
+				//for (int i = 0; i < numberK; i++)
+				//{
+				//	float tempFloat = nodeDistance(thirdTempNode, queueArray[i]->frontNode);
+				//	//printf("TEST PRINT #9:\t%f\n", tempFloat);
+				//	if (maxDistance > tempFloat)
+				//	{
+				//		maxDistance = tempFloat;
+				//		maxIndex = i;
+				//	}
+				//}
+				////printf("%d\n", maxIndex);
 
 
+				///*
+				//함수 [ shortestQueuePush ] 테스트											[ TEST PRINT #10 ]
+				//*/
+				//shortestQueuePush(queueArray, thirdTempNode);
+				////printf("TEST PRINT #10:\t%f\n", queueArray[0]->frontNode->next->featureArray[0]);
 
+				while (thirdQueue->nodeCounts != 0)
+				{
+					Node* testNode = queuePop(thirdQueue);
+					shortestQueuePush(queueArray, testNode);
+				}
 
 	return;
 }
