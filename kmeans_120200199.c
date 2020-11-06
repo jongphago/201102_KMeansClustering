@@ -141,7 +141,7 @@ Node* structFromRandom()
 	for (int i = 0; i < featureCount; i++)
 	{
 		tempNode->featureArray[i] = 1/(float)rand()*1000;
-		printf("%f\t", tempNode->featureArray[i]);
+		//printf("%f\t", tempNode->featureArray[i]);
 	}
 	tempNode->next = NULL;
 	return tempNode;
@@ -410,12 +410,14 @@ void shortestQueueRenew(Queue** sampleArray)
 				sampleArray[i]->nodeCounts--;
 				currentNode->next = NULL;
 				sampleArray[shortestIndex]->rearNode->next = currentNode;
+				sampleArray[i]->rearNode = currentNode;
 				sampleArray[shortestIndex]->nodeCounts++;
 			}
 			if (currentNode == sampleArray[i]->rearNode)
 			{
 				break;
 			}
+			tempNode = currentNode;
 			currentNode = currentNode->next;
 		}
 	}
@@ -423,7 +425,7 @@ void shortestQueueRenew(Queue** sampleArray)
 	/*
 	rearNode를 마지막 Node로 지정한다.
 	*/
-	for (int i = 0; i < numberK; i++)
+	/*for (int i = 0; i < numberK; i++)
 	{
 		Node* tempRearNode = sampleArray[i]->rearNode;
 		while (tempRearNode != NULL)
@@ -431,7 +433,7 @@ void shortestQueueRenew(Queue** sampleArray)
 			sampleArray[i]->rearNode = tempRearNode;
 			tempRearNode = tempRearNode->next;
 		}
-	}
+	}*/
 }
 
 void showQueue(Queue* queue)
@@ -473,8 +475,15 @@ void meanQueue(Queue* queue)
 	}
 	for (int i = 0; i < featureCount; i++)
 	{
-		sumArray[i] /= totalCount;
+		sumArray[i] /= (totalCount-1);
 		queue->frontNode->featureArray[i] = sumArray[i];
+	}
+}
+void meanQueueArray(Queue** queueArray)
+{
+	for (int i = 0; i < numberK; i++)
+	{
+		meanQueue(queueArray[i]);
 	}
 }
 void showQueueArray(Queue** queueArray)
@@ -509,8 +518,7 @@ void main(void) {
 	*/
 	Queue** sampleArray;
 	sampleArray = makeSampleArray();
-	//showQueueArray(sampleArray);
-	//showQueueArray(sampleArray);
+	showQueueArray(sampleArray);
 
 	/*
 	
@@ -518,12 +526,12 @@ void main(void) {
 	while (inputQueue->nodeCounts != 0) 
 	{
 		Node* testNode = queuePop(inputQueue);
-		//shortestQueuePush(sampleArray, testNode);
+		shortestQueuePush(sampleArray, testNode);
 	}
-	//showQueue(inputQueue);
 	//showQueueArray(sampleArray);
 
 
-	//shortestQueueRenew(sampleArray);
+	meanQueueArray(sampleArray);
+	//showQueueArray(sampleArray);
 	return;
 }
