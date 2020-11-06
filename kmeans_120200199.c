@@ -65,7 +65,7 @@ Node* structFromRandom()
 	tempNode->featureArray = malloc(featureCount * sizeof(float));
 	for (int i = 0; i < featureCount; i++)
 	{
-		(tempNode->featureArray)[i] = 1/(float)rand(1000)*10000;
+		tempNode->featureArray[i] = 1/(float)rand(1000)*10000;
 	}
 	tempNode->next = NULL;
 	return tempNode;
@@ -150,8 +150,9 @@ void pushQueue(Queue* queue, Node* tempNode)
 void pushFirst(Queue* queue)
 {
 	Node* tempNode = structFromRandom();
-	queue->rearNode = tempNode;
 	queue->frontNode = tempNode;
+	queue->rearNode = tempNode;
+	queue->nodeCounts++;
 }
 /*
 함수 [ makeQueue ] 는
@@ -297,11 +298,30 @@ void shortestQueuePush(Queue** queueArray, Node* tempNode)
 			shortestIndex = i;
 		}
 	}
-	printf("%d\n", shortestIndex);
+	//printf("%d\n", shortestIndex);
 	queueArray[shortestIndex]->rearNode->next = tempNode;
 	queueArray[shortestIndex]->rearNode = tempNode;
 	queueArray[shortestIndex]->nodeCounts++;
 }
+
+void showQueueArray(Queue** queueArray)
+{
+	for (int i = 0; i < numberK; i++)
+	{
+		Node* currentNode = queueArray[i]->frontNode;
+		printf("INDEX: %d\n", i);
+		do
+		{
+			for (int j = 0; j < featureCount; j++)
+			{
+				printf("%f ", currentNode->featureArray[j]);
+			}
+			currentNode = currentNode->next;
+			printf("\n");
+		} while (currentNode->next != NULL);
+	}
+}
+
 
 
 void main(void) {
@@ -428,13 +448,19 @@ void main(void) {
 				////printf("%d\n", maxIndex);
 
 
-				///*
-				//함수 [ shortestQueuePush ] 테스트											[ TEST PRINT #10 ]
-				//*/
-				//shortestQueuePush(queueArray, thirdTempNode);
-				////printf("TEST PRINT #10:\t%f\n", queueArray[0]->frontNode->next->featureArray[0]);
-
-				while (thirdQueue->nodeCounts != 0)
+				/*
+				함수 [ shortestQueuePush ] 테스트											[ TEST PRINT #10 ]
+				*/
+				Node* testNode = queuePop(thirdQueue);
+				shortestQueuePush(queueArray, testNode);
+				printf("TEST PRINT #10:\t");
+				for (int j = 0; j < featureCount; j++)
+				{
+					printf("%f\t", queueArray[0]->frontNode->next->featureArray[j]);
+				}
+				printf("\n");
+				showQueueArray(queueArray);
+				/*while (thirdQueue->nodeCounts != 0)
 				{
 					Node* testNode = queuePop(thirdQueue);
 					shortestQueuePush(queueArray, testNode);
@@ -443,23 +469,24 @@ void main(void) {
 				{
 					printf("queueArray[%d]: %d\n", i, queueArray[i]->nodeCounts);
 				}
-
 				for (int i = 0; i < numberK; i++)
 				{
 					Node* currentNode = queueArray[i]->frontNode;
 					printf("INDEX: %d\n", i);
+					int processCount = 0;
+
 					while (currentNode->next != NULL)
 					{
 						for (int j = 0; j < featureCount; j++)
 						{
 							printf("%f ", currentNode->featureArray[j]);
+							processCount++;
 						}
 						currentNode = currentNode->next;
 						printf("\n");
 					}
-					
-
-				}
+					printf("\t%d\n", processCount);
+				}*/
 
 	return;
 }
