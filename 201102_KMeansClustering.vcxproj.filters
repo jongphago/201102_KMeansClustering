@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="kmeans_120200199.c">
+    <ClCompile Include="kmeans.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
