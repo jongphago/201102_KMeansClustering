@@ -12,24 +12,99 @@ typedef struct Node{
 	struct Node* next;
 } Node;
 
-/*
-Node에 데이터를 저장하려고 하니 feature의 수가 유동적이다.
-예상 해결방법은 다음과 같다.
-1. float* 형 멤버를 선언하고, 동적할당한다.
-2. linked list로 구현한다.
-*/
-
 typedef  struct Queue{
 	Node* frontNode;
 	Node* rearNode;
 	int nodeCounts;
 } Queue;
 
-void scanfException(int scanfReturn, int scanfTarget);
-void dataToArray(FILE** inputFile, float*** dataArray);
-void printFloat2DArray(float** dataArray, int firstIndexCount, int secondIndexCount);
-void randomSampleArray(float*** sampleArray);
+/*
+함수 [scanfException]은 scanf함수 또는 fscanf 함수가
+알맞은 값의 개수를 반환하였는지 확인합니다.
+*/
+void scanfException(int scanfReturn, int scanfTarget)
+{
+	if (scanfReturn != scanfTarget)
+	{
+		printf("SCANF ERROR iS OCCURED.");
+		exit(-1);
+	}
+	return;
+}
+/*
+함수 [dataToArray]는 "input.txt" 파일을 읽어서 점 데이터를
+float형 2차원 배열(변수명:dataArray)에 저장합니다.
+*/
+void dataToArray(FILE** inputFile, float*** dataArray)
+{
+	*inputFile = fopen("input.txt", "r");
+	if ((*inputFile) == NULL)
+	{
+		printf("File Open Error");
+		exit(-1);
+	}
+	scanfCount = fscanf(*inputFile, "%d %d %d", &dataCount, &featureCount, &numberK);
+	if (scanfCount != 3)
+	{
+		printf("fscanf Error");
+		exit(-1);
+	}
 
+	*dataArray = malloc(dataCount * sizeof(float*));
+	for (int i = 0; i < dataCount; i++)
+	{
+		(*dataArray)[i] = malloc(featureCount * sizeof(float));
+		if ((*dataArray)[i] == NULL)
+		{
+			printf("MEMORY ALLOCATION ERROR.");
+			exit(-1);
+		}
+		for (int j = 0; j < featureCount; j++)
+		{
+			scanfCount = fscanf(*inputFile, "%f", &((*dataArray)[i][j]));
+			if (scanfCount != 1) {
+				exit(-1);
+			}
+			scanfException(scanfCount, 1);
+		}
+	}
+	fclose(*inputFile);
+}
+/*
+함수 [printFloat2DArray]는 float type의 2차원 배열을 받아서
+index:		data1		data2		...		dataK 형태로 출력합니다.
+행의 수는 firstIndexCount, 열의 수는 secondIndexCount와 같습니다.
+*/
+void printFloat2DArray(float** dataArray, int firstIndexCount, int secondIndexCount)
+{
+	for (int i = 0; i < firstIndexCount; i++)
+	{
+		printf("%3d:\t", i);
+		for (int j = 0; j < secondIndexCount; j++)
+		{
+			printf("%.3f\t", dataArray[i][j]);
+		}
+		printf("\n");
+	}
+}
+/*
+함수 [randomSampleArray]는 numberK * featureCount 크기의
+임의의 점을 생성합니다.
+random함수의 seed는 1000으로 고정되어 있습니다.
+*/
+void randomSampleArray(float*** sampleArray)
+{
+	srand(1000);
+	*sampleArray = malloc(numberK * sizeof(float*));
+	for (int i = 0; i < numberK; i++)
+	{
+		(*sampleArray)[i] = malloc(featureCount * sizeof(float));
+		for (int j = 0; j < featureCount; j++)
+		{
+			(*sampleArray)[i][j] = (float)rand();
+		}
+	}
+}
 /*
 함수 [ queueFromArray ]는
 	sampleArray의 원소 수 만큼 Queue를 생성하고 
@@ -178,7 +253,7 @@ Queue* makeQueue()
  * 함수의 동작 순서
 	1.
 */
-Queue** makeQueueArray()
+Queue** makeSampleArray()
 {
 	Queue** queueArray = malloc(numberK * sizeof(Queue*));
 	for (int i = 0; i < numberK; i++)
@@ -207,7 +282,6 @@ Queue** makeInputQueue(float** dataArray)
 	}
 	return queueArray;
 }
-
 // 입력데이터를 Queue에 담는 함수
 /*
  * 함수명 : makeFileQueue
@@ -243,7 +317,10 @@ Queue* makeFileQueue()
 	fclose(inputFile);
 	return tempQueue;
 }
-
+/*
+이 프로젝트에서 queuePop은 노드를 추출 하는 것이므로
+추출한 Node의 next를 NULL로 해줘야 한다.
+*/
 Node* queuePop(Queue* dataQueue)
 {
 	if (dataQueue->nodeCounts == 0)
@@ -253,26 +330,24 @@ Node* queuePop(Queue* dataQueue)
 	}
 	Node* tempNode = dataQueue->frontNode;
 	dataQueue->frontNode = tempNode->next;
+	tempNode->next = NULL;
 	dataQueue->nodeCounts--;
 	return tempNode;
 }
-
 float nodeDistance(Node* firstNode, Node* secondNode)
 {
 	float sum = 0, deviation = 0;
 	for (int i = 0; i < featureCount; i++)
 	{
-		deviation = firstNode->featureArray[i] - secondNode->featureArray[i];
+		deviation = (firstNode->featureArray[i]) - (secondNode->featureArray[i]);
 		//printf("%f\t%f\t\n", firstNode->featureArray[i], secondNode->featureArray[i]);
 		//printf("DEV : %f\n", deviation);
-		deviation = deviation * deviation;
+		deviation *= deviation;
 		//printf("DEV^2 : %f\n", deviation);
 		sum += deviation;
 	}
 	return sum;
 }
-
-
 /*
  * 함수명 : shortestQueuePush
  * 입력형식 : 
@@ -290,11 +365,11 @@ void shortestQueuePush(Queue** queueArray, Node* tempNode)
 	shortestIndex = 0;
 	for (int i = 0; i < numberK; i++)
 	{
-		float tempFloat = nodeDistance(tempNode, queueArray[i]->frontNode);
-		if (shortestDistance > tempFloat)
+		float tempDistance = nodeDistance(tempNode, queueArray[i]->frontNode);
+		if (shortestDistance > tempDistance)
 		{
 			//printf("%f\t", tempFloat);
-			shortestDistance = tempFloat;
+			shortestDistance = tempDistance;
 			shortestIndex = i;
 		}
 	}
@@ -303,285 +378,74 @@ void shortestQueuePush(Queue** queueArray, Node* tempNode)
 	queueArray[shortestIndex]->rearNode = tempNode;
 	queueArray[shortestIndex]->nodeCounts++;
 }
-
+void showQueue(Queue* queue)
+{
+	printf("NODE CNTS: %d\n", queue->nodeCounts);
+	if (queue->nodeCounts == 0)
+	{
+		printf("EMPTY QUEUE");
+	}
+	else
+	{
+		int index = 0;
+		Node* currentNode = queue->frontNode;
+		while (currentNode != NULL)
+		{
+			printf("%3d\t", index++);
+			for (int i = 0; i < featureCount; i++)
+			{
+				printf("%f\t", currentNode->featureArray[i]);
+			}
+			printf("\n");
+			currentNode = currentNode->next;
+		}
+	}
+}
 void showQueueArray(Queue** queueArray)
 {
 	for (int i = 0; i < numberK; i++)
 	{
-		Node* currentNode = queueArray[i]->frontNode;
-		printf("INDEX: %d\n", i);
-		do
-		{
-			for (int j = 0; j < featureCount; j++)
-			{
-				printf("%f ", currentNode->featureArray[j]);
-			}
-			currentNode = currentNode->next;
-			printf("\n");
-		} while (currentNode->next != NULL);
+		printf("[ INDEX: %d ]\n", i);
+		showQueue(queueArray[i]);
 	}
 }
-
-
-
-void main(void) {
-	FILE* inputFile;
-	float** dataArray;				// inputFile의 값을 저장하고 있는 [ featureCount ] 차원 배열
-	float** sampleArray;			// numberK개 Queue*를 저장하고 있는 1차원 배열, samplePoint를 featureArray로 갖는다.
-	Queue** queueArray;
-
-	dataToArray(&inputFile, &dataArray);
-	//printf("%d %d %d\n", dataCount, featureCount, numberK);
-	//printFloat2DArray(dataArray, dataCount, featureCount);
-	randomSampleArray(&sampleArray);
-	//printFloat2DArray(sampleArray, numberK, featureCount);
-
-				/*
-				함수 [ structFormDRandom] 테스트										[ TEST PRINT #1 ]
-				*/
-				Node* testRandomNode = structFromRandom();
-				for (int i = 0; i < featureCount; i++)
-				{
-					//printf("TEST PRINT #1:\t%f\n", testRandomNode->featureArray[i]);
-				}
-
-				/*
-				함수 [ pushFirst ] 테스트															[ TEST PRINT #2 ]
-				*/
-				Queue* firstQueue = makeQueue();
-				pushFirst(firstQueue);
-				for (int i = 0; i < featureCount; i++)
-				{
-					//printf("TEST PRINT #2:\t%f\n", firstQueue->frontNode->featureArray[i]);
-				}
-				
-				/*
-				함수 [ makeQueueArray ] 테스트											[ TEST PRINT #3 ]
-				*/
-				queueArray = makeQueueArray();
-				for (int i = 0; i < numberK; i++)
-				{
-					printf("TEST PRINT #3:\t");
-					for (int j = 0; j < featureCount; j++)
-					{
-						printf("%f\t", queueArray[i]->frontNode->featureArray[j]);
-					}
-					printf("\n");
-				}
-
-				/*
-				함수 [ structFromArray ] 테스트												[ TEST PRINT #4 ]
-				*/
-				float sampleArrayElement[] = { -0.7303783878, 1.2121255077 };
-				Node* testArrayNode = structFromArray(sampleArrayElement);
-				for (int i = 0; i < featureCount; i++)
-				{
-					//printf("TEST PRINT #4:\t%f\n", testArrayNode->featureArray[i]);
-				}
-
-				/*
-				함수 [ pushArrayStruct ] 테스트												[ TEST PRINT #5 ]
-				*/
-				Queue* secondQueue = makeQueue();
-				pushArrayStruct(secondQueue, sampleArrayElement);
-				for (int i = 0; i < featureCount; i++)
-				{
-					//printf("TEST PRINT #5:\t%f\n", secondQueue->frontNode->featureArray[i]);
-				}
-
-				/*
-				함수 [ makeInputQueue ] 테스트											[ TEST PRINT #6 ]
-				*/
-				Queue** secondQueueArray = makeInputQueue(dataArray);
-				for (int i = 0; i < dataCount; i++)
-				{
-					for (int j = 0; j < featureCount; j++)
-					{
-						//printf("TEST PRINT #6:\t%f\t", secondQueueArray[i]->frontNode->featureArray[j]);
-					}
-					//printf("\n");
-				}
-
-				/*
-				함수 [ makeFileQueue ] 테스트												[ TEST PRINT #7 ]
-				*/
-				Queue* thirdQueue = makeFileQueue();
-				Node* currentNode = thirdQueue->frontNode;
-
-				for (int i = 0; i < dataCount; i++)
-				{
-					//printf("TEST PRINT #7:\t%3d\t", i);
-					for (int j = 0; j < featureCount; j++)
-					{
-						//printf("%f\t", currentNode->featureArray[j]);
-					}
-					currentNode = currentNode->next;
-					//printf("\n");
-				}
-
-				///*
-				//함수 [ queuePop ] 테스트															[ TEST PRINT #8 ]
-				//*/
-				//Node* thirdTempNode = queuePop(thirdQueue);
-				////printf("TEST PRINT #8:\t");
-				//for (int i = 0; i < featureCount; i++)
-				//{
-				//	//printf("%f\t", thirdTempNode->featureArray[i]);
-				//}
-				////printf("\n");
-				//
-				///*
-				//함수 [ nodeDistance ] 테스트														[ TEST PRINT #9 ]
-				//*/
-				//float maxDistance = 0;
-				//int maxIndex = 0;
-				//for (int i = 0; i < numberK; i++)
-				//{
-				//	float tempFloat = nodeDistance(thirdTempNode, queueArray[i]->frontNode);
-				//	//printf("TEST PRINT #9:\t%f\n", tempFloat);
-				//	if (maxDistance > tempFloat)
-				//	{
-				//		maxDistance = tempFloat;
-				//		maxIndex = i;
-				//	}
-				//}
-				////printf("%d\n", maxIndex);
-
-
-				/*
-				함수 [ shortestQueuePush ] 테스트											[ TEST PRINT #10 ]
-				*/
-				Node* testNode = queuePop(thirdQueue);
-				shortestQueuePush(queueArray, testNode);
-				printf("TEST PRINT #10:\t");
-				for (int j = 0; j < featureCount; j++)
-				{
-					printf("%f\t", queueArray[0]->frontNode->next->featureArray[j]);
-				}
-				printf("\n");
-				showQueueArray(queueArray);
-				/*while (thirdQueue->nodeCounts != 0)
-				{
-					Node* testNode = queuePop(thirdQueue);
-					shortestQueuePush(queueArray, testNode);
-				}
-				for (int i = 0; i < numberK; i++)
-				{
-					printf("queueArray[%d]: %d\n", i, queueArray[i]->nodeCounts);
-				}
-				for (int i = 0; i < numberK; i++)
-				{
-					Node* currentNode = queueArray[i]->frontNode;
-					printf("INDEX: %d\n", i);
-					int processCount = 0;
-
-					while (currentNode->next != NULL)
-					{
-						for (int j = 0; j < featureCount; j++)
-						{
-							printf("%f ", currentNode->featureArray[j]);
-							processCount++;
-						}
-						currentNode = currentNode->next;
-						printf("\n");
-					}
-					printf("\t%d\n", processCount);
-				}*/
-
-	return;
-}
-/*
-함수[ functionNameRegulation] 는
-	
-함수의 동작순서는 다음과 같다.
-	1.
-*/
-
-/*
-함수 [scanfException]은 scanf함수 또는 fscanf 함수가
-알맞은 값의 개수를 반환하였는지 확인합니다.
-*/
-void scanfException(int scanfReturn, int scanfTarget)
+void showNodeCounts(Queue** queueArray)
 {
-	if (scanfReturn != scanfTarget)
-	{
-		printf("SCANF ERROR iS OCCURED.");
-		exit(-1);
-	}
-	return;
-}
-
-/*
-함수 [dataToArray]는 "input.txt" 파일을 읽어서 점 데이터를
-float형 2차원 배열(변수명:dataArray)에 저장합니다.
-*/
-void dataToArray(FILE** inputFile, float*** dataArray) 
-{
-	*inputFile = fopen("input.txt", "r");
-	if ((*inputFile) == NULL)
-	{
-		printf("File Open Error");
-		exit(-1);
-	}
-	scanfCount = fscanf(*inputFile, "%d %d %d", &dataCount, &featureCount, &numberK);
-	if (scanfCount != 3)
-	{
-		printf("fscanf Error");
-		exit(-1);
-	}
-
-	*dataArray = malloc(dataCount * sizeof(float*));
-	for (int i = 0; i < dataCount; i++)
-	{
-		(*dataArray)[i] = malloc(featureCount * sizeof(float));
-		if ((*dataArray)[i] == NULL)
-		{
-			printf("MEMORY ALLOCATION ERROR.");
-			exit(-1);
-		}
-		for (int j = 0; j < featureCount; j++)
-		{
-			scanfCount = fscanf(*inputFile, "%f", &((*dataArray)[i][j]));
-			if (scanfCount != 1) {
-				exit(-1);
-			}
-			scanfException(scanfCount, 1);
-		}
-	}
-	fclose(*inputFile);
-}
-/*
-함수 [printFloat2DArray]는 float type의 2차원 배열을 받아서 
-index:		data1		data2		...		dataK 형태로 출력합니다.
-행의 수는 firstIndexCount, 열의 수는 secondIndexCount와 같습니다.
-*/
-void printFloat2DArray(float** dataArray, int firstIndexCount, int secondIndexCount) 
-{
-	for (int i = 0; i < firstIndexCount; i++)
-	{
-		printf("%3d:\t", i);
-		for (int j = 0; j < secondIndexCount; j++)
-		{
-			printf("%.3f\t", dataArray[i][j]);
-		}
-		printf("\n");
-	}
-}
-/*
-함수 [randomSampleArray]는 numberK * featureCount 크기의
-임의의 점을 생성합니다.
-random함수의 seed는 1000으로 고정되어 있습니다.
-*/
-void randomSampleArray(float*** sampleArray)
-{
-	srand(1000);
-	*sampleArray = malloc(numberK * sizeof(float*));
 	for (int i = 0; i < numberK; i++)
 	{
-		(*sampleArray)[i] = malloc(featureCount * sizeof(float));
-		for (int j = 0; j < featureCount; j++)
-		{
-			(*sampleArray)[i][j] = (float)rand();
-		}
+		printf("INDEX %d:", i);
+		printf("%3d\n", queueArray[i]->nodeCounts);
 	}
+	printf("\n");
+}
+
+void main(void) {
+	
+	/*
+	inputQueue
+	*/
+	Queue* inputQueue = makeFileQueue();
+	//showQueue(inputQueue);
+
+	/*
+	sampleArray를 생성한다.
+	*/
+	Queue** sampleArray;
+	sampleArray = makeSampleArray();
+	//showQueueArray(sampleArray);
+	showQueueArray(sampleArray);
+
+	/*
+	
+	*/
+	while (inputQueue->nodeCounts != 0) 
+	{
+		Node* testNode = queuePop(inputQueue);
+		shortestQueuePush(sampleArray, testNode);
+	}
+	//showQueue(inputQueue);
+
+	showQueueArray(sampleArray);
+
+	return;
 }
