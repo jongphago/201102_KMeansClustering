@@ -5,7 +5,7 @@
 int dataCount = 0;		
 int featureCount = 0;	
 int numberK = 0;			
-int scanfCount = 0;		
+int scanfCount = 0;	
 
 typedef struct Node {
 	float* featureArray;
@@ -130,7 +130,7 @@ float nodeDistance(Node* firstNode, Node* testNode)
 }
 Stack** makeSampleArray()
 {
-	FILE* fileInput = fopen("smallinput.txt", "r");
+	FILE* fileInput = fopen("input.txt", "r");
 	fscanf(fileInput, "%d %d %d", &dataCount, & featureCount, &numberK);
 
 	Stack** sampleArray = malloc(numberK * sizeof(Stack*));
@@ -142,7 +142,8 @@ Stack** makeSampleArray()
 		firstNode->featureArray = malloc(featureCount * sizeof(float));
 		for (int j = 0; j < featureCount; j++) 
 		{
-			firstNode->featureArray[j] = 100/(float)rand();
+			firstNode->featureArray[j] = 1 / (float)rand();
+			//firstNode->featureArray[j] = (float)rand();
 		}
 		firstNode->next = sampleArray[i]->top;
 		sampleArray[i]->top = firstNode;
@@ -181,7 +182,8 @@ void meanStack(Stack* stack)
 		printf("빈 스택에 대해 초기화를 다시 진행합니다.\n");
 		for (int i = 0; i < featureCount; i++)
 		{
-			stack->top->featureArray[i] = 1000/(float)rand();
+			stack->top->featureArray[i] = 1 / (float)rand();
+			//stack->top->featureArray[i] = (float)rand();
 		}
 		return;
 	}
@@ -234,34 +236,32 @@ void updateSample(Stack** sampleArray, Stack** waitingArray)
 {
 	for (int i = 0; i < numberK; i++)
 	{
-		int shortestIndex = 0;
-		float shortestDistance = 3.4028234664e+38;
-
 		Node* previousNode = sampleArray[i]->top;
 		Node* currentNode = previousNode->next;
 		Node* firstNode;
-
+		int shortestIndex;
+		float shortestDistance;
 		while (currentNode != NULL)
 		{
+			shortestIndex = 0;
+			shortestDistance = 3.4028234664e+38;
 			for (int j = 0; j < numberK; j++)
 			{
 				firstNode = sampleArray[j]->top;
-				//numberK번 거리비교
 				float tempDistance = nodeDistance(firstNode, currentNode);
 				//printf("[ TEST PRINT #1 ] TempDistance: %f\n", tempDistance);						// [ TEST PRINT #1 ]
 				if (shortestDistance > tempDistance)
 				{
 					shortestDistance = tempDistance;
 					shortestIndex = j;
+					//printf("%d", shortestIndex);
 				}
 			}
 			if (shortestIndex != i)
 			{
-				//sampleArray에서 pop하여 waitingArray에 push 한다.
 				Node* tempNode = currentNode;
 				previousNode->next = currentNode->next;
 				currentNode = previousNode->next;
-
 				push(waitingArray[shortestIndex], tempNode);
 			}
 			else
@@ -290,23 +290,26 @@ void linkStack(Stack** sampleArray, Stack** waitingArray)
 void main(void)
 {
 	srand(1000);
-	int iteration = 100;
+	int iteration = 10;
 	Stack** sampleArray = makeSampleArray();
+	showStackCountArray(sampleArray);
+	/*showFirstArray(sampleArray);
+	showStackArray(sampleArray);*/
 	Stack** waitingArray = makeWaitingArray();
 
 	for (int i = 0; i < iteration; i++)
 	{
 		meanStackArray(sampleArray);
 		updateSample(sampleArray, waitingArray);
-		printf("1. Update sampleArray NodeCounts\n");
-		showStackCountArray(sampleArray);
+		/*printf("1. Update sampleArray NodeCounts\n");
+		showStackArray(sampleArray);
 		printf("2. Temporary waitingArray NodeCounts\n");
-		showStackCountArray(waitingArray);
+		showStackArray(waitingArray);*/
 		linkStack(sampleArray, waitingArray);
-		printf(">> Final sampleArray NodeCounts\n");
+		/*printf(">> Final sampleArray NodeCounts\n");
+		showStackArray(sampleArray);
+		printf("\n\n");*/
 		showStackCountArray(sampleArray);
-		printf("\n\n");
 	}
-
-
+	showStackArray(sampleArray);
 }
